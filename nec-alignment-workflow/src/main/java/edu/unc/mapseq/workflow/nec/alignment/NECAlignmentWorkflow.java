@@ -360,13 +360,13 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                     commandInputList.add(commandInput);
 
                     commandInput = new CommandInput();
-                    commandInput.setCommand(String.format("%s/bin/imeta add -d %s/%s FileType %s NIDA-UCSF", irodsHome,
+                    commandInput.setCommand(String.format("%s/bin/imeta add -d %s/%s FileType %s NEC", irodsHome,
                             iRODSDirectory, bean.getFile().getName(), bean.getType()));
                     commandInput.setWorkDir(tmpDir);
                     commandInputList.add(commandInput);
 
                     commandInput = new CommandInput();
-                    commandInput.setCommand(String.format("%s/bin/imeta add -d %s/%s System %s NIDA-UCSF", irodsHome,
+                    commandInput.setCommand(String.format("%s/bin/imeta add -d %s/%s System %s NEC", irodsHome,
                             iRODSDirectory, bean.getFile().getName(),
                             StringUtils.capitalize(bean.getRunMode().toString().toLowerCase())));
                     commandInput.setWorkDir(tmpDir);

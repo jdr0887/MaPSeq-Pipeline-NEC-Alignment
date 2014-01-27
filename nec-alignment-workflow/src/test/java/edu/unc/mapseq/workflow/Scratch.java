@@ -20,7 +20,7 @@ public class Scratch {
     @Test
     public void testSampleDirectory() {
         String saHome = "/proj/renci/sequence_analysis";
-        File projectDirectory = new File(saHome, "NIDA");
+        File projectDirectory = new File(saHome, "NEC");
         File cohortDirectory = new File(projectDirectory, "UCSF");
         String sampleName = "051420Sm";
         File firstCharSampleDirectory = new File(cohortDirectory, sampleName.substring(0, 1));
