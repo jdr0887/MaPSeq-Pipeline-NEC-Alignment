@@ -1,0 +1,15 @@
+<features name="mapseq-pipeline-nec-alignment-${project.version}">
+
+  <feature name="mapseq-pipeline-nec-alignment" version="${project.version}" resolver="(obr)">
+    <bundle>mvn:edu.unc.mapseq.pipelines.nec-alignment/nec-alignment-workflow/${project.version}</bundle>
+    <bundle>mvn:edu.unc.mapseq.pipelines.nec-alignment/nec-alignment-commands/${project.version}</bundle>
+    <bundle start-level="100">mvn:edu.unc.mapseq.pipelines.nec-alignment/nec-alignment-executor/${project.version}</bundle>
+    <bundle start-level="100">mvn:edu.unc.mapseq.pipelines.nec-alignment/nec-alignment-messaging/${project.version}</bundle>
+  </feature>
+
+</features>
+
+
+
+
+

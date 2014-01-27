@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0" default-activation="eager">
+
+  <reference id="connectionFactory" interface="javax.jms.ConnectionFactory" />
+
+  <reference id="NECAlignmentWorkflowBeanService" interface="edu.unc.mapseq.workflow.WorkflowBeanService"
+    component-name="NECAlignmentWorkflowBeanService" />
+
+  <bean id="NECAlignmentMessagingService" class="edu.unc.mapseq.messaging.nec.alignment.NECAlignmentMessagingService"
+    init-method="start" destroy-method="stop" activation="eager">
+    <property name="connectionFactory" ref="connectionFactory" />
+    <property name="workflowBeanService" ref="NECAlignmentWorkflowBeanService" />
+    <property name="destinationName" value="queue/nec.alignment" />
+  </bean>
+
+</blueprint>

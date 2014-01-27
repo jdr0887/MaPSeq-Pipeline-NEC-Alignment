@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0" default-activation="lazy">
+
+  <cm:property-placeholder persistent-id="edu.unc.mapseq.workflow.nec.alignment"
+    update-strategy="reload">
+    <cm:default-properties>
+      <cm:property name="corePoolSize" value="100" />
+      <cm:property name="maxPoolSize" value="100" />
+      <cm:property name="siteName" value="Kure" />
+      <cm:property name="referenceSequence"
+        value="$NECALIGNMENT_REFERENCES_DIRECTORY/BUILD.37.1/bwa061sam0118/BUILD.37.1.sorted.shortid.fa" />
+    </cm:default-properties>
+  </cm:property-placeholder>
+
+  <reference id="maPSeqConfigurationService" interface="edu.unc.mapseq.config.MaPSeqConfigurationService" />
+  <reference id="accountDAO" interface="edu.unc.mapseq.dao.AccountDAO" />
+  <reference id="accountGroupDAO" interface="edu.unc.mapseq.dao.AccountGroupDAO" />
+  <reference id="fileDataDAO" interface="edu.unc.mapseq.dao.FileDataDAO" />
+  <reference id="HTSFSampleDAO" interface="edu.unc.mapseq.dao.HTSFSampleDAO" />
+  <reference id="platformDAO" interface="edu.unc.mapseq.dao.PlatformDAO" />
+  <reference id="jobDAO" interface="edu.unc.mapseq.dao.JobDAO" />
+  <reference id="studyDAO" interface="edu.unc.mapseq.dao.StudyDAO" />
+  <reference id="sequencerRunDAO" interface="edu.unc.mapseq.dao.SequencerRunDAO" />
+  <reference id="workflowDAO" interface="edu.unc.mapseq.dao.WorkflowDAO" />
+  <reference id="workflowPlanDAO" interface="edu.unc.mapseq.dao.WorkflowPlanDAO" />
+  <reference id="workflowRunDAO" interface="edu.unc.mapseq.dao.WorkflowRunDAO" />
+
+  <bean id="maPSeqDAOBean" class="edu.unc.mapseq.dao.MaPSeqDAOBean">
+    <property name="accountDAO" ref="accountDAO" />
+    <property name="accountGroupDAO" ref="accountGroupDAO" />
+    <property name="fileDataDAO" ref="fileDataDAO" />
+    <property name="HTSFSampleDAO" ref="HTSFSampleDAO" />
+    <property name="platformDAO" ref="platformDAO" />
+    <property name="jobDAO" ref="jobDAO" />
+    <property name="studyDAO" ref="studyDAO" />
+    <property name="sequencerRunDAO" ref="sequencerRunDAO" />
+    <property name="workflowDAO" ref="workflowDAO" />
+    <property name="workflowPlanDAO" ref="workflowPlanDAO" />
+    <property name="workflowRunDAO" ref="workflowRunDAO" />
+  </bean>
+
+  <bean id="NECAlignmentWorkflowBeanService" class="edu.unc.mapseq.workflow.WorkflowBeanServiceImpl">
+    <property name="corePoolSize" value="${corePoolSize}" />
+    <property name="maxPoolSize" value="${maxPoolSize}" />
+    <property name="maPSeqConfigurationService" ref="maPSeqConfigurationService" />
+    <property name="maPSeqDAOBean" ref="maPSeqDAOBean" />
+    <property name="attributes">
+      <map>
+        <entry key="siteName" value="${siteName}" />
+        <entry key="referenceSequence" value="${referenceSequence}" />
+      </map>
+    </property>
+    <cm:managed-properties persistent-id="edu.unc.mapseq.workflow.nec.alignment"
+      update-strategy="container-managed" />
+  </bean>
+
+  <service ref="NECAlignmentWorkflowBeanService" interface="edu.unc.mapseq.workflow.WorkflowBeanService" />
+
+</blueprint>
