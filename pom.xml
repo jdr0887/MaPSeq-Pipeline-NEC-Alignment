@@ -8,7 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.unc.mapseq.pipelines</groupId>
   <artifactId>nec-alignment</artifactId>
-  <version>0.2.2-SNAPSHOT</version>
+  <version>0.2.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <karaf.version>2.3.3</karaf.version>
@@ -72,7 +72,7 @@
       <dependency>
       	<groupId>edu.unc.mapseq.pipelines.nec-alignment</groupId>
       	<artifactId>nec-alignment-workflow</artifactId>
-      	<version>0.2.2-SNAPSHOT</version>
+      	<version>0.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
       	<groupId>org.apache.activemq</groupId>
