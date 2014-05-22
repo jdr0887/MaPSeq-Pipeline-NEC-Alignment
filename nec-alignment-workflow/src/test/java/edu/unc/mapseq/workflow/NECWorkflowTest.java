@@ -7,10 +7,10 @@ import java.io.IOException;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.junit.Test;
-import org.renci.jlrm.condor.CondorDOTExporter;
+import org.renci.jlrm.condor.ext.CondorDOTExporter;
 import org.renci.jlrm.condor.CondorJob;
 import org.renci.jlrm.condor.CondorJobEdge;
-import org.renci.jlrm.condor.CondorJobVertexNameProvider;
+import org.renci.jlrm.condor.ext.CondorJobVertexNameProvider;
 
 import edu.unc.mapseq.module.bwa.BWAAlignCLI;
 import edu.unc.mapseq.module.bwa.BWASAMPairedEndCLI;
