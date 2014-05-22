@@ -8,7 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.unc.mapseq.pipelines</groupId>
   <artifactId>nec-alignment</artifactId>
-  <version>0.3.5-SNAPSHOT</version>
+  <version>0.3.5</version>
   <packaging>pom</packaging>
   <properties>
     <karaf.version>2.3.5</karaf.version>
@@ -45,7 +45,7 @@
   <scm>
     <developerConnection>scm:git:ssh://${user.name}@code.renci.org/gitroot/mps_nec_a_pl</developerConnection>
     <connection>scm:git:ssh://developername@code.renci.org/gitroot/mps_nec_a_pl</connection>
-    <tag>HEAD</tag>
+    <tag>nec-alignment-0.3.5</tag>
   </scm>
   <dependencyManagement>
     <dependencies>
@@ -72,7 +72,7 @@
       <dependency>
       	<groupId>edu.unc.mapseq.pipelines.nec-alignment</groupId>
       	<artifactId>nec-alignment-workflow</artifactId>
-      	<version>0.3.5-SNAPSHOT</version>
+      	<version>0.3.5</version>
       </dependency>
       <dependency>
       	<groupId>org.apache.activemq</groupId>
