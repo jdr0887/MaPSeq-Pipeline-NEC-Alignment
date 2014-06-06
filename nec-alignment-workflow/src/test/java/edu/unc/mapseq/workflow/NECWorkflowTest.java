@@ -7,9 +7,10 @@ import java.io.IOException;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.junit.Test;
-import org.renci.jlrm.condor.ext.CondorDOTExporter;
 import org.renci.jlrm.condor.CondorJob;
+import org.renci.jlrm.condor.CondorJobBuilder;
 import org.renci.jlrm.condor.CondorJobEdge;
+import org.renci.jlrm.condor.ext.CondorDOTExporter;
 import org.renci.jlrm.condor.ext.CondorJobVertexNameProvider;
 
 import edu.unc.mapseq.module.bwa.BWAAlignCLI;
@@ -30,46 +31,48 @@ public class NECWorkflowTest {
         int count = 0;
 
         // new job
-        CondorJob fastQCR1Job = new CondorJob(String.format("%s_%d", FastQCCLI.class.getSimpleName(), ++count), null);
+        CondorJob fastQCR1Job = new CondorJobBuilder().name(
+                String.format("%s_%d", FastQCCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(fastQCR1Job);
 
         // new job
-        CondorJob bwaAlignR1Job = new CondorJob(String.format("%s_%d", BWAAlignCLI.class.getSimpleName(), ++count),
-                null);
+        CondorJob bwaAlignR1Job = new CondorJobBuilder().name(
+                String.format("%s_%d", BWAAlignCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(bwaAlignR1Job);
         graph.addEdge(fastQCR1Job, bwaAlignR1Job);
 
         // new job
-        CondorJob fastQCR2Job = new CondorJob(String.format("%s_%d", FastQCCLI.class.getSimpleName(), ++count), null);
+        CondorJob fastQCR2Job = new CondorJobBuilder().name(
+                String.format("%s_%d", FastQCCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(fastQCR2Job);
 
         // new job
-        CondorJob bwaAlignR2Job = new CondorJob(String.format("%s_%d", BWAAlignCLI.class.getSimpleName(), ++count),
-                null);
+        CondorJob bwaAlignR2Job = new CondorJobBuilder().name(
+                String.format("%s_%d", BWAAlignCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(bwaAlignR2Job);
         graph.addEdge(fastQCR2Job, bwaAlignR2Job);
 
-        CondorJob writeVCFHeaderJob = new CondorJob(String.format("%s_%d", WriteVCFHeaderCLI.class.getSimpleName(),
-                ++count), null);
+        CondorJob writeVCFHeaderJob = new CondorJobBuilder().name(
+                String.format("%s_%d", WriteVCFHeaderCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(writeVCFHeaderJob);
 
         // new job
-        CondorJob bwaSAMPairedEndJob = new CondorJob(String.format("%s_%d", BWASAMPairedEndCLI.class.getSimpleName(),
-                ++count), null);
+        CondorJob bwaSAMPairedEndJob = new CondorJobBuilder().name(
+                String.format("%s_%d", BWASAMPairedEndCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(bwaSAMPairedEndJob);
         graph.addEdge(bwaAlignR1Job, bwaSAMPairedEndJob);
         graph.addEdge(bwaAlignR2Job, bwaSAMPairedEndJob);
         graph.addEdge(writeVCFHeaderJob, bwaSAMPairedEndJob);
 
         // new job
-        CondorJob picardAddOrReplaceReadGroupsJob = new CondorJob(String.format("%s_%d",
-                PicardAddOrReplaceReadGroupsCLI.class.getSimpleName(), ++count), null);
+        CondorJob picardAddOrReplaceReadGroupsJob = new CondorJobBuilder().name(
+                String.format("%s_%d", PicardAddOrReplaceReadGroupsCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(picardAddOrReplaceReadGroupsJob);
         graph.addEdge(bwaSAMPairedEndJob, picardAddOrReplaceReadGroupsJob);
 
         // new job
-        CondorJob samtoolsIndexJob = new CondorJob(String.format("%s_%d", SAMToolsIndexCLI.class.getSimpleName(),
-                ++count), null);
+        CondorJob samtoolsIndexJob = new CondorJobBuilder().name(
+                String.format("%s_%d", SAMToolsIndexCLI.class.getSimpleName(), ++count)).build();
         graph.addVertex(samtoolsIndexJob);
         graph.addEdge(picardAddOrReplaceReadGroupsJob, samtoolsIndexJob);
 
