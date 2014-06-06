@@ -1,5 +1,8 @@
 package edu.unc.mapseq.commands.nec.alignment;
 
+import java.io.IOException;
+import java.io.StringWriter;
+
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
@@ -11,9 +14,9 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.felix.gogo.commands.Argument;
 import org.apache.felix.gogo.commands.Command;
 import org.apache.karaf.shell.console.AbstractAction;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 import edu.unc.mapseq.config.MaPSeqConfigurationService;
 import edu.unc.mapseq.dao.MaPSeqDAOBean;
@@ -49,20 +52,36 @@ public class RunNECAlignmentWorkflowAction extends AbstractAction {
             Destination destination = session.createQueue("queue/nec.alignment");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-            JSONObject parentJSONObject = new JSONObject();
-            parentJSONObject.put("account_name", System.getProperty("user.name"));
-            JSONArray entityArray = new JSONArray();
-            JSONObject entityType = new JSONObject();
-            entityType.put("entity_type", "HTSFSample");
-            entityType.put("guid", htsfSampleId);
-            entityArray.put(entityType);
-            entityType = new JSONObject();
-            entityType.put("entity_type", "WorkflowRun");
-            entityType.put("name", workflowRunName);
-            entityArray.put(entityType);
-            parentJSONObject.put("entities", entityArray);
-            producer.send(session.createTextMessage(parentJSONObject.toString()));
-        } catch (JSONException | JMSException e) {
+            StringWriter sw = new StringWriter();
+
+            JsonGenerator generator = new JsonFactory().createGenerator(sw);
+
+            generator.writeStartObject();
+            generator.writeStringField("accountName", System.getProperty("user.name"));
+            generator.writeArrayFieldStart("entities");
+
+            generator.writeStartObject();
+            generator.writeStringField("entityType", "HTSFSample");
+            generator.writeStringField("guid", htsfSampleId.toString());
+            generator.writeEndObject();
+
+            generator.writeStartObject();
+            generator.writeStringField("entityType", "WorkflowRun");
+            generator.writeStringField("name", workflowRunName);
+            generator.writeEndObject();
+
+            generator.writeEndArray();
+            generator.writeEndObject();
+
+            generator.flush();
+            generator.close();
+
+            sw.flush();
+            sw.close();
+
+            producer.send(session.createTextMessage(sw.toString()));
+
+        } catch (JMSException | IOException e) {
             e.printStackTrace();
         } finally {
             try {
