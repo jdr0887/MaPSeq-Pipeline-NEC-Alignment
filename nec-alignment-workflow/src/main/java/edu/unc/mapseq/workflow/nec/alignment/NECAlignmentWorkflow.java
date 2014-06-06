@@ -16,6 +16,7 @@ import org.renci.common.exec.CommandOutput;
 import org.renci.common.exec.Executor;
 import org.renci.common.exec.ExecutorException;
 import org.renci.jlrm.condor.CondorJob;
+import org.renci.jlrm.condor.CondorJobBuilder;
 import org.renci.jlrm.condor.CondorJobEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +33,11 @@ import edu.unc.mapseq.module.fastqc.IgnoreLevelType;
 import edu.unc.mapseq.module.picard.PicardAddOrReplaceReadGroupsCLI;
 import edu.unc.mapseq.module.picard.PicardSortOrderType;
 import edu.unc.mapseq.module.samtools.SAMToolsIndexCLI;
-import edu.unc.mapseq.workflow.AbstractWorkflow;
-import edu.unc.mapseq.workflow.IRODSBean;
 import edu.unc.mapseq.workflow.WorkflowException;
-import edu.unc.mapseq.workflow.WorkflowJobFactory;
 import edu.unc.mapseq.workflow.WorkflowUtil;
+import edu.unc.mapseq.workflow.impl.AbstractWorkflow;
+import edu.unc.mapseq.workflow.impl.IRODSBean;
+import edu.unc.mapseq.workflow.impl.WorkflowJobFactory;
 
 public class NECAlignmentWorkflow extends AbstractWorkflow {
 
@@ -110,145 +111,143 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
             File fastqcR2Output;
             try {
                 // new job
-                CondorJob writeVCFHeaderJob = WorkflowJobFactory.createJob(++count, WriteVCFHeaderCLI.class,
-                        getWorkflowPlan(), htsfSample);
-                writeVCFHeaderJob.setSiteName(siteName);
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.BARCODE, htsfSample.getBarcode());
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.RUN, sequencerRun.getName());
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.SAMPLENAME, sampleName);
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.STUDYNAME, htsfSample.getStudy().getName());
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.LANE, htsfSample.getLaneIndex().toString());
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.LABNAME, "kwilhelmsen");
+                CondorJobBuilder builder = WorkflowJobFactory.createJob(++count, WriteVCFHeaderCLI.class,
+                        getWorkflowPlan(), htsfSample).siteName(siteName);
                 String flowcellProper = sequencerRun.getName().substring(sequencerRun.getName().length() - 9,
                         sequencerRun.getName().length());
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.FLOWCELL, flowcellProper);
                 writeVCFHeaderOut = new File(outputDirectory, fastqLaneRootName + ".vcf.hdr");
-                writeVCFHeaderJob.addArgument(WriteVCFHeaderCLI.OUTPUT, writeVCFHeaderOut.getAbsolutePath());
+                builder.addArgument(WriteVCFHeaderCLI.BARCODE, htsfSample.getBarcode())
+                        .addArgument(WriteVCFHeaderCLI.RUN, sequencerRun.getName())
+                        .addArgument(WriteVCFHeaderCLI.SAMPLENAME, sampleName)
+                        .addArgument(WriteVCFHeaderCLI.STUDYNAME, htsfSample.getStudy().getName())
+                        .addArgument(WriteVCFHeaderCLI.LANE, htsfSample.getLaneIndex().toString())
+                        .addArgument(WriteVCFHeaderCLI.LABNAME, "kwilhelmsen")
+                        .addArgument(WriteVCFHeaderCLI.FLOWCELL, flowcellProper)
+                        .addArgument(WriteVCFHeaderCLI.OUTPUT, writeVCFHeaderOut.getAbsolutePath());
+                CondorJob writeVCFHeaderJob = builder.build();
+                logger.info(writeVCFHeaderJob.toString());
                 graph.addVertex(writeVCFHeaderJob);
 
                 // new job
-                CondorJob fastQCR1Job = WorkflowJobFactory.createJob(++count, FastQCCLI.class, getWorkflowPlan(),
-                        htsfSample);
-                fastQCR1Job.setSiteName(siteName);
-                fastQCR1Job.addArgument(FastQCCLI.INPUT, r1FastqFile.getAbsolutePath());
+                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, getWorkflowPlan(), htsfSample)
+                        .siteName(siteName);
                 fastqcR1Output = new File(outputDirectory, r1FastqRootName + ".fastqc.zip");
-                fastQCR1Job.addArgument(FastQCCLI.OUTPUT, fastqcR1Output.getAbsolutePath());
-                fastQCR1Job.addArgument(FastQCCLI.IGNORE, IgnoreLevelType.ERROR.toString());
+                builder.addArgument(FastQCCLI.INPUT, r1FastqFile.getAbsolutePath())
+                        .addArgument(FastQCCLI.OUTPUT, fastqcR1Output.getAbsolutePath())
+                        .addArgument(FastQCCLI.IGNORE, IgnoreLevelType.ERROR.toString());
+                CondorJob fastQCR1Job = builder.build();
+                logger.info(fastQCR1Job.toString());
                 graph.addVertex(fastQCR1Job);
 
                 // new job
-                CondorJob bwaAlignR1Job = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, getWorkflowPlan(),
-                        htsfSample, false);
-                bwaAlignR1Job.setSiteName(siteName);
-                bwaAlignR1Job.addArgument(BWAAlignCLI.THREADS, "4");
-                bwaAlignR1Job.setNumberOfProcessors(4);
-                bwaAlignR1Job.addArgument(BWAAlignCLI.FASTQ, r1FastqFile.getAbsolutePath());
-                bwaAlignR1Job.addArgument(BWAAlignCLI.FASTADB, referenceSequence);
+                builder = WorkflowJobFactory
+                        .createJob(++count, BWAAlignCLI.class, getWorkflowPlan(), htsfSample, false).siteName(siteName)
+                        .numberOfProcessors(4);
                 File saiR1OutFile = new File(outputDirectory, r1FastqRootName + ".sai");
-                bwaAlignR1Job.addArgument(BWAAlignCLI.OUTFILE, saiR1OutFile.getAbsolutePath());
+                builder.addArgument(BWAAlignCLI.THREADS, "4")
+                        .addArgument(BWAAlignCLI.FASTQ, r1FastqFile.getAbsolutePath())
+                        .addArgument(BWAAlignCLI.FASTADB, referenceSequence)
+                        .addArgument(BWAAlignCLI.OUTFILE, saiR1OutFile.getAbsolutePath());
+                CondorJob bwaAlignR1Job = builder.build();
+                logger.info(bwaAlignR1Job.toString());
                 graph.addVertex(bwaAlignR1Job);
                 graph.addEdge(fastQCR1Job, bwaAlignR1Job);
 
                 // new job
-                CondorJob fastQCR2Job = WorkflowJobFactory.createJob(++count, FastQCCLI.class, getWorkflowPlan(),
-                        htsfSample);
-                fastQCR2Job.setSiteName(siteName);
-                fastQCR2Job.addArgument(FastQCCLI.INPUT, r2FastqFile.getAbsolutePath());
+                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, getWorkflowPlan(), htsfSample)
+                        .siteName(siteName);
                 fastqcR2Output = new File(outputDirectory, r2FastqRootName + ".fastqc.zip");
-                fastQCR2Job.addArgument(FastQCCLI.OUTPUT, fastqcR2Output.getAbsolutePath());
-                fastQCR2Job.addArgument(FastQCCLI.IGNORE, IgnoreLevelType.ERROR.toString());
+                builder.addArgument(FastQCCLI.INPUT, r2FastqFile.getAbsolutePath())
+                        .addArgument(FastQCCLI.OUTPUT, fastqcR2Output.getAbsolutePath())
+                        .addArgument(FastQCCLI.IGNORE, IgnoreLevelType.ERROR.toString());
+                CondorJob fastQCR2Job = builder.build();
+                logger.info(fastQCR2Job.toString());
                 graph.addVertex(fastQCR2Job);
 
                 // new job
-                CondorJob bwaAlignR2Job = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, getWorkflowPlan(),
-                        htsfSample, false);
-                bwaAlignR2Job.setSiteName(siteName);
-                bwaAlignR2Job.addArgument(BWAAlignCLI.THREADS, "4");
-                bwaAlignR2Job.setNumberOfProcessors(4);
-                bwaAlignR2Job.addArgument(BWAAlignCLI.FASTQ, r2FastqFile.getAbsolutePath());
-                bwaAlignR2Job.addArgument(BWAAlignCLI.FASTADB, referenceSequence);
+                builder = WorkflowJobFactory
+                        .createJob(++count, BWAAlignCLI.class, getWorkflowPlan(), htsfSample, false).siteName(siteName)
+                        .numberOfProcessors(4);
                 File saiR2OutFile = new File(outputDirectory, r2FastqRootName + ".sai");
-                bwaAlignR2Job.addArgument(BWAAlignCLI.OUTFILE, saiR2OutFile.getAbsolutePath());
+                builder.addArgument(BWAAlignCLI.THREADS, "4")
+                        .addArgument(BWAAlignCLI.FASTQ, r2FastqFile.getAbsolutePath())
+                        .addArgument(BWAAlignCLI.FASTADB, referenceSequence)
+                        .addArgument(BWAAlignCLI.OUTFILE, saiR2OutFile.getAbsolutePath());
+                CondorJob bwaAlignR2Job = builder.build();
+                logger.info(bwaAlignR2Job.toString());
                 graph.addVertex(bwaAlignR2Job);
                 graph.addEdge(fastQCR2Job, bwaAlignR2Job);
 
                 // new job
-                CondorJob bwaSAMPairedEndJob = WorkflowJobFactory.createJob(++count, BWASAMPairedEndCLI.class,
-                        getWorkflowPlan(), htsfSample, false);
-                bwaSAMPairedEndJob.setSiteName(siteName);
-                bwaSAMPairedEndJob.addArgument(BWASAMPairedEndCLI.FASTADB, referenceSequence);
-                bwaSAMPairedEndJob.addArgument(BWASAMPairedEndCLI.FASTQ1, r1FastqFile.getAbsolutePath());
-                bwaSAMPairedEndJob.addArgument(BWASAMPairedEndCLI.FASTQ2, r2FastqFile.getAbsolutePath());
-                bwaSAMPairedEndJob.addArgument(BWASAMPairedEndCLI.SAI1, saiR1OutFile.getAbsolutePath());
-                bwaSAMPairedEndJob.addArgument(BWASAMPairedEndCLI.SAI2, saiR2OutFile.getAbsolutePath());
+                builder = WorkflowJobFactory.createJob(++count, BWASAMPairedEndCLI.class, getWorkflowPlan(),
+                        htsfSample, false).siteName(siteName);
                 File bwaSAMPairedEndOutFile = new File(outputDirectory, fastqLaneRootName + ".sam");
-                bwaSAMPairedEndJob.addArgument(BWASAMPairedEndCLI.OUTFILE, bwaSAMPairedEndOutFile.getAbsolutePath());
+                builder.addArgument(BWASAMPairedEndCLI.FASTADB, referenceSequence)
+                        .addArgument(BWASAMPairedEndCLI.FASTQ1, r1FastqFile.getAbsolutePath())
+                        .addArgument(BWASAMPairedEndCLI.FASTQ2, r2FastqFile.getAbsolutePath())
+                        .addArgument(BWASAMPairedEndCLI.SAI1, saiR1OutFile.getAbsolutePath())
+                        .addArgument(BWASAMPairedEndCLI.SAI2, saiR2OutFile.getAbsolutePath())
+                        .addArgument(BWASAMPairedEndCLI.OUTFILE, bwaSAMPairedEndOutFile.getAbsolutePath());
+                CondorJob bwaSAMPairedEndJob = builder.build();
+                logger.info(bwaSAMPairedEndJob.toString());
                 graph.addVertex(bwaSAMPairedEndJob);
                 graph.addEdge(bwaAlignR1Job, bwaSAMPairedEndJob);
                 graph.addEdge(bwaAlignR2Job, bwaSAMPairedEndJob);
                 graph.addEdge(writeVCFHeaderJob, bwaSAMPairedEndJob);
 
                 // new job
-                CondorJob removeSAIR1Job = WorkflowJobFactory.createJob(++count, RemoveCLI.class, getWorkflowPlan(),
-                        htsfSample, false);
-                removeSAIR1Job.setSiteName(siteName);
-                removeSAIR1Job.addArgument(RemoveCLI.FILE, saiR1OutFile.getAbsolutePath());
-                graph.addVertex(removeSAIR1Job);
-                graph.addEdge(bwaSAMPairedEndJob, removeSAIR1Job);
+                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, getWorkflowPlan(), htsfSample, false)
+                        .siteName(siteName);
+                builder.addArgument(RemoveCLI.FILE, saiR1OutFile.getAbsolutePath()).addArgument(RemoveCLI.FILE,
+                        saiR2OutFile.getAbsolutePath());
+                CondorJob removeSAIJob = builder.build();
+                logger.info(removeSAIJob.toString());
+                graph.addVertex(removeSAIJob);
+                graph.addEdge(bwaSAMPairedEndJob, removeSAIJob);
 
                 // new job
-                CondorJob removeSAIR2Job = WorkflowJobFactory.createJob(++count, RemoveCLI.class, getWorkflowPlan(),
-                        htsfSample, false);
-                removeSAIR2Job.setSiteName(siteName);
-                removeSAIR2Job.addArgument(RemoveCLI.FILE, saiR2OutFile.getAbsolutePath());
-                graph.addVertex(removeSAIR2Job);
-                graph.addEdge(bwaSAMPairedEndJob, removeSAIR2Job);
-
-                // new job
-                CondorJob picardAddOrReplaceReadGroupsJob = WorkflowJobFactory.createJob(++count,
-                        PicardAddOrReplaceReadGroupsCLI.class, getWorkflowPlan(), htsfSample);
-                picardAddOrReplaceReadGroupsJob.setSiteName(siteName);
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.INPUT,
-                        bwaSAMPairedEndOutFile.getAbsolutePath());
+                builder = WorkflowJobFactory.createJob(++count, PicardAddOrReplaceReadGroupsCLI.class,
+                        getWorkflowPlan(), htsfSample).siteName(siteName);
                 File picardAddOrReplaceReadGroupsOuput = new File(outputDirectory, bwaSAMPairedEndOutFile.getName()
                         .replace(".sam", ".fixed-rg.bam"));
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.OUTPUT,
-                        picardAddOrReplaceReadGroupsOuput.getAbsolutePath());
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.SORTORDER,
-                        PicardSortOrderType.COORDINATE.toString().toLowerCase());
-                picardAddOrReplaceReadGroupsJob.addArgument(
-                        PicardAddOrReplaceReadGroupsCLI.READGROUPID,
-                        String.format("%s-%s_L%03d", sequencerRun.getName(), htsfSample.getBarcode(),
-                                htsfSample.getLaneIndex()));
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPLIBRARY,
-                        sampleName);
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORM,
-                        sequencerRun.getPlatform().getInstrument());
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORMUNIT,
-                        htsfSample.getBarcode());
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPSAMPLENAME,
-                        sampleName);
-                picardAddOrReplaceReadGroupsJob.addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPCENTERNAME, "UNC");
+                builder.addArgument(PicardAddOrReplaceReadGroupsCLI.INPUT, bwaSAMPairedEndOutFile.getAbsolutePath())
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.OUTPUT,
+                                picardAddOrReplaceReadGroupsOuput.getAbsolutePath())
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.SORTORDER,
+                                PicardSortOrderType.COORDINATE.toString().toLowerCase())
+                        .addArgument(
+                                PicardAddOrReplaceReadGroupsCLI.READGROUPID,
+                                String.format("%s-%s_L%03d", sequencerRun.getName(), htsfSample.getBarcode(),
+                                        htsfSample.getLaneIndex()))
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPLIBRARY, sampleName)
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORM,
+                                sequencerRun.getPlatform().getInstrument())
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORMUNIT, htsfSample.getBarcode())
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPSAMPLENAME, sampleName)
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPCENTERNAME, "UNC");
+                CondorJob picardAddOrReplaceReadGroupsJob = builder.build();
+                logger.info(picardAddOrReplaceReadGroupsJob.toString());
                 graph.addVertex(picardAddOrReplaceReadGroupsJob);
                 graph.addEdge(bwaSAMPairedEndJob, picardAddOrReplaceReadGroupsJob);
 
                 // new job
-                CondorJob removeBWASAMPairedEndOutFileJob = WorkflowJobFactory.createJob(++count, RemoveCLI.class,
-                        getWorkflowPlan(), htsfSample, false);
-                removeBWASAMPairedEndOutFileJob.setSiteName(siteName);
-                removeBWASAMPairedEndOutFileJob.addArgument(RemoveCLI.FILE, bwaSAMPairedEndOutFile.getAbsolutePath());
+                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, getWorkflowPlan(), htsfSample, false)
+                        .siteName(siteName);
+                builder.addArgument(RemoveCLI.FILE, bwaSAMPairedEndOutFile.getAbsolutePath());
+                CondorJob removeBWASAMPairedEndOutFileJob = builder.build();
+                logger.info(removeBWASAMPairedEndOutFileJob.toString());
                 graph.addVertex(removeBWASAMPairedEndOutFileJob);
                 graph.addEdge(picardAddOrReplaceReadGroupsJob, removeBWASAMPairedEndOutFileJob);
 
                 // new job
-                CondorJob samtoolsIndexJob = WorkflowJobFactory.createJob(++count, SAMToolsIndexCLI.class,
-                        getWorkflowPlan(), htsfSample);
-                samtoolsIndexJob.setSiteName(siteName);
-                samtoolsIndexJob.addArgument(SAMToolsIndexCLI.INPUT,
-                        picardAddOrReplaceReadGroupsOuput.getAbsolutePath());
+                builder = WorkflowJobFactory.createJob(++count, SAMToolsIndexCLI.class, getWorkflowPlan(), htsfSample)
+                        .siteName(siteName);
                 File samtoolsIndexOutput = new File(outputDirectory, picardAddOrReplaceReadGroupsOuput.getName()
                         .replace(".bam", ".bai"));
-                samtoolsIndexJob.addArgument(SAMToolsIndexCLI.OUTPUT, samtoolsIndexOutput.getAbsolutePath());
+                builder.addArgument(SAMToolsIndexCLI.INPUT, picardAddOrReplaceReadGroupsOuput.getAbsolutePath())
+                        .addArgument(SAMToolsIndexCLI.OUTPUT, samtoolsIndexOutput.getAbsolutePath());
+                CondorJob samtoolsIndexJob = builder.build();
+                logger.info(samtoolsIndexJob.toString());
                 graph.addVertex(samtoolsIndexJob);
                 graph.addEdge(picardAddOrReplaceReadGroupsJob, samtoolsIndexJob);
 
@@ -327,8 +326,7 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 commandInputList.add(commandInput);
 
                 commandInput = new CommandInput();
-                commandInput.setCommand(String.format("%s/bin/imeta add -C %s Project NEC", irodsHome,
-                        iRODSDirectory));
+                commandInput.setCommand(String.format("%s/bin/imeta add -C %s Project NEC", irodsHome, iRODSDirectory));
                 commandInput.setWorkDir(tmpDir);
                 commandInputList.add(commandInput);
 
