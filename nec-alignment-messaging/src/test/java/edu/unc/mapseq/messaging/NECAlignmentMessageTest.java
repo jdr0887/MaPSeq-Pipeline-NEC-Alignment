@@ -42,22 +42,22 @@ public class NECAlignmentMessageTest {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
             String format = "{\"account_name\":\"%s\",\"entities\":[{\"entity_type\":\"HTSFSample\",\"guid\":\"%d\"},{\"entity_type\":\"WorkflowRun\",\"name\":\"%s-%s\"}]}";
 
-            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67401,
-                    "jdr-nec-alignment", DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
+            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67401, "jdr-nec-alignment",
+                    DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67467,
-                    "jdr-nec-alignment", DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
+            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67467, "jdr-nec-alignment",
+                    DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67499,
-                    "jdr-nec-alignment", DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
+            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67499, "jdr-nec-alignment",
+                    DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
 
         } catch (JMSException e) {
             e.printStackTrace();
