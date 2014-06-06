@@ -7,10 +7,14 @@
   <reference id="NECAlignmentWorkflowBeanService" interface="edu.unc.mapseq.workflow.WorkflowBeanService"
     component-name="NECAlignmentWorkflowBeanService" />
 
-  <bean id="NECAlignmentMessagingService" class="edu.unc.mapseq.messaging.nec.alignment.NECAlignmentMessagingService"
+  <bean id="NECAlignmentMessageListener" class="edu.unc.mapseq.messaging.nec.alignment.NECAlignmentMessageListener">
+    <property name="workflowBeanService" ref="NECAlignmentWorkflowBeanService" />
+  </bean>
+
+  <bean id="NECAlignmentMessageService" class="edu.unc.mapseq.messaging.nec.alignment.NECAlignmentMessageService"
     init-method="start" destroy-method="stop" activation="eager">
     <property name="connectionFactory" ref="connectionFactory" />
-    <property name="workflowBeanService" ref="NECAlignmentWorkflowBeanService" />
+    <property name="messageListener" ref="NECAlignmentMessageListener" />
     <property name="destinationName" value="queue/nec.alignment" />
   </bean>
 
