@@ -47,7 +47,12 @@ public class NECAlignmentWorkflowExecutorTask extends TimerTask {
         WorkflowPlanDAO workflowPlanDAO = this.workflowBeanService.getMaPSeqDAOBean().getWorkflowPlanDAO();
 
         try {
-            Workflow workflow = workflowDAO.findByName("NECAlignment");
+            List<Workflow> workflowList = workflowDAO.findByName("NECAlignment");
+            if (workflowList == null || (workflowList != null && workflowList.isEmpty())) {
+                logger.error("No Workflow Found: {}", "NECAlignment");
+                return;
+            }
+            Workflow workflow = workflowList.get(0);
             List<WorkflowPlan> workflowPlanList = workflowPlanDAO.findEnqueued(workflow.getId());
 
             if (workflowPlanList != null && workflowPlanList.size() > 0) {

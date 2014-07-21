@@ -2,6 +2,7 @@ package edu.unc.mapseq.messaging.nec.alignment;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.jms.JMSException;
@@ -91,30 +92,27 @@ public class NECAlignmentMessageListener extends AbstractMessageListener {
         Set<HTSFSample> htsfSampleSet = new HashSet<HTSFSample>();
         WorkflowRun workflowRun = null;
         Account account = null;
-
-        String accountName = workflowMessage.getAccountName();
-
         try {
-            account = accountDAO.findByName(accountName);
-        } catch (MaPSeqDAOException e) {
-        }
-
-        if (account == null) {
-            logger.error("Must register account first");
-            return;
-        }
-
-        Workflow workflow = null;
-        String workflowName = "NECAlignment";
-        try {
-            workflow = workflowDAO.findByName(workflowName);
+            List<Account> accountList = accountDAO.findByName(workflowMessage.getAccountName());
+            if (accountList == null || (accountList != null && accountList.isEmpty())) {
+                logger.error("Account doesn't exist: {}", workflowMessage.getAccountName());
+                return;
+            }
+            account = accountList.get(0);
         } catch (MaPSeqDAOException e) {
             logger.error("ERROR", e);
         }
 
-        if (workflow == null) {
-            logger.error("No Workflow Found: {}", workflowName);
-            return;
+        Workflow workflow = null;
+        try {
+            List<Workflow> workflowList = workflowDAO.findByName("NECAlignment");
+            if (workflowList == null || (workflowList != null && workflowList.isEmpty())) {
+                logger.error("No Workflow Found: {}", "NECAlignment");
+                return;
+            }
+            workflow = workflowList.get(0);
+        } catch (MaPSeqDAOException e) {
+            logger.error("ERROR", e);
         }
 
         try {
