@@ -22,8 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.unc.mapseq.config.RunModeType;
-import edu.unc.mapseq.dao.model.HTSFSample;
-import edu.unc.mapseq.dao.model.SequencerRun;
+import edu.unc.mapseq.dao.model.Flowcell;
+import edu.unc.mapseq.dao.model.Sample;
+import edu.unc.mapseq.dao.model.WorkflowRunAttempt;
 import edu.unc.mapseq.module.bwa.BWAAlignCLI;
 import edu.unc.mapseq.module.bwa.BWASAMPairedEndCLI;
 import edu.unc.mapseq.module.core.RemoveCLI;
@@ -35,11 +36,11 @@ import edu.unc.mapseq.module.picard.PicardSortOrderType;
 import edu.unc.mapseq.module.samtools.SAMToolsIndexCLI;
 import edu.unc.mapseq.workflow.WorkflowException;
 import edu.unc.mapseq.workflow.WorkflowUtil;
-import edu.unc.mapseq.workflow.impl.AbstractWorkflow;
+import edu.unc.mapseq.workflow.impl.AbstractSampleWorkflow;
 import edu.unc.mapseq.workflow.impl.IRODSBean;
 import edu.unc.mapseq.workflow.impl.WorkflowJobFactory;
 
-public class NECAlignmentWorkflow extends AbstractWorkflow {
+public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
 
     private final Logger logger = LoggerFactory.getLogger(NECAlignmentWorkflow.class);
 
@@ -68,31 +69,35 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
 
         int count = 0;
 
-        Set<HTSFSample> htsfSampleSet = getAggregateHTSFSampleSet();
-        logger.info("htsfSampleSet.size(): {}", htsfSampleSet.size());
+        Set<Sample> sampleSet = getAggregatedSamples();
+        logger.info("sampleSet.size(): {}", sampleSet.size());
 
         String siteName = getWorkflowBeanService().getAttributes().get("siteName");
         String referenceSequence = getWorkflowBeanService().getAttributes().get("referenceSequence");
+        String readGroupPlatform = getWorkflowBeanService().getAttributes().get("readGroupPlatform");
+        String readGroupPlatformUnit = getWorkflowBeanService().getAttributes().get("readGroupPlatformUnit");
 
-        for (HTSFSample htsfSample : htsfSampleSet) {
+        WorkflowRunAttempt attempt = getWorkflowRunAttempt();
 
-            if ("Undetermined".equals(htsfSample.getBarcode())) {
+        for (Sample sample : sampleSet) {
+
+            if ("Undetermined".equals(sample.getBarcode())) {
                 continue;
             }
 
-            SequencerRun sequencerRun = htsfSample.getSequencerRun();
-            File outputDirectory = createOutputDirectory(sequencerRun.getName(), htsfSample,
-                    getName().replace("Alignment", ""), getVersion());
+            logger.debug(sample.toString());
 
-            logger.debug("htsfSample: {}", htsfSample.toString());
-            List<File> readPairList = WorkflowUtil.getReadPairList(htsfSample.getFileDatas(), sequencerRun.getName(),
-                    htsfSample.getLaneIndex());
+            Flowcell flowcell = sample.getFlowcell();
+            File outputDirectory = new File(sample.getOutputDirectory());
+
+            List<File> readPairList = WorkflowUtil.getReadPairList(sample.getFileDatas(), flowcell.getName(),
+                    sample.getLaneIndex());
             logger.debug("readPairList.size(): {}", readPairList.size());
 
             // assumption: a dash is used as a delimiter between a participantId
             // and the external code
-            int idx = htsfSample.getName().lastIndexOf("-");
-            String sampleName = idx != -1 ? htsfSample.getName().substring(0, idx) : htsfSample.getName();
+            int idx = sample.getName().lastIndexOf("-");
+            String sampleName = idx != -1 ? sample.getName().substring(0, idx) : sample.getName();
 
             if (readPairList.size() != 2) {
                 throw new WorkflowException("readPairList != 2");
@@ -111,16 +116,16 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
             File fastqcR2Output;
             try {
                 // new job
-                CondorJobBuilder builder = WorkflowJobFactory.createJob(++count, WriteVCFHeaderCLI.class,
-                        getWorkflowPlan(), htsfSample).siteName(siteName);
-                String flowcellProper = sequencerRun.getName().substring(sequencerRun.getName().length() - 9,
-                        sequencerRun.getName().length());
+                CondorJobBuilder builder = WorkflowJobFactory.createJob(++count, WriteVCFHeaderCLI.class, attempt,
+                        sample).siteName(siteName);
+                String flowcellProper = flowcell.getName().substring(flowcell.getName().length() - 9,
+                        flowcell.getName().length());
                 writeVCFHeaderOut = new File(outputDirectory, fastqLaneRootName + ".vcf.hdr");
-                builder.addArgument(WriteVCFHeaderCLI.BARCODE, htsfSample.getBarcode())
-                        .addArgument(WriteVCFHeaderCLI.RUN, sequencerRun.getName())
+                builder.addArgument(WriteVCFHeaderCLI.BARCODE, sample.getBarcode())
+                        .addArgument(WriteVCFHeaderCLI.RUN, flowcell.getName())
                         .addArgument(WriteVCFHeaderCLI.SAMPLENAME, sampleName)
-                        .addArgument(WriteVCFHeaderCLI.STUDYNAME, htsfSample.getStudy().getName())
-                        .addArgument(WriteVCFHeaderCLI.LANE, htsfSample.getLaneIndex().toString())
+                        .addArgument(WriteVCFHeaderCLI.STUDYNAME, sample.getStudy().getName())
+                        .addArgument(WriteVCFHeaderCLI.LANE, sample.getLaneIndex().toString())
                         .addArgument(WriteVCFHeaderCLI.LABNAME, "kwilhelmsen")
                         .addArgument(WriteVCFHeaderCLI.FLOWCELL, flowcellProper)
                         .addArgument(WriteVCFHeaderCLI.OUTPUT, writeVCFHeaderOut.getAbsolutePath());
@@ -129,8 +134,7 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addVertex(writeVCFHeaderJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, getWorkflowPlan(), htsfSample)
-                        .siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, attempt, sample).siteName(siteName);
                 fastqcR1Output = new File(outputDirectory, r1FastqRootName + ".fastqc.zip");
                 builder.addArgument(FastQCCLI.INPUT, r1FastqFile.getAbsolutePath())
                         .addArgument(FastQCCLI.OUTPUT, fastqcR1Output.getAbsolutePath())
@@ -140,9 +144,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addVertex(fastQCR1Job);
 
                 // new job
-                builder = WorkflowJobFactory
-                        .createJob(++count, BWAAlignCLI.class, getWorkflowPlan(), htsfSample, false).siteName(siteName)
-                        .numberOfProcessors(4);
+                builder = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, attempt, sample, false)
+                        .siteName(siteName).numberOfProcessors(4);
                 File saiR1OutFile = new File(outputDirectory, r1FastqRootName + ".sai");
                 builder.addArgument(BWAAlignCLI.THREADS, "4")
                         .addArgument(BWAAlignCLI.FASTQ, r1FastqFile.getAbsolutePath())
@@ -154,8 +157,7 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addEdge(fastQCR1Job, bwaAlignR1Job);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, getWorkflowPlan(), htsfSample)
-                        .siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, attempt, sample).siteName(siteName);
                 fastqcR2Output = new File(outputDirectory, r2FastqRootName + ".fastqc.zip");
                 builder.addArgument(FastQCCLI.INPUT, r2FastqFile.getAbsolutePath())
                         .addArgument(FastQCCLI.OUTPUT, fastqcR2Output.getAbsolutePath())
@@ -165,9 +167,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addVertex(fastQCR2Job);
 
                 // new job
-                builder = WorkflowJobFactory
-                        .createJob(++count, BWAAlignCLI.class, getWorkflowPlan(), htsfSample, false).siteName(siteName)
-                        .numberOfProcessors(4);
+                builder = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, attempt, sample, false)
+                        .siteName(siteName).numberOfProcessors(4);
                 File saiR2OutFile = new File(outputDirectory, r2FastqRootName + ".sai");
                 builder.addArgument(BWAAlignCLI.THREADS, "4")
                         .addArgument(BWAAlignCLI.FASTQ, r2FastqFile.getAbsolutePath())
@@ -179,8 +180,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addEdge(fastQCR2Job, bwaAlignR2Job);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, BWASAMPairedEndCLI.class, getWorkflowPlan(),
-                        htsfSample, false).siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, BWASAMPairedEndCLI.class, attempt, sample, false)
+                        .siteName(siteName);
                 File bwaSAMPairedEndOutFile = new File(outputDirectory, fastqLaneRootName + ".sam");
                 builder.addArgument(BWASAMPairedEndCLI.FASTADB, referenceSequence)
                         .addArgument(BWASAMPairedEndCLI.FASTQ1, r1FastqFile.getAbsolutePath())
@@ -196,8 +197,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addEdge(writeVCFHeaderJob, bwaSAMPairedEndJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, getWorkflowPlan(), htsfSample, false)
-                        .siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, attempt, sample, false).siteName(
+                        siteName);
                 builder.addArgument(RemoveCLI.FILE, saiR1OutFile.getAbsolutePath()).addArgument(RemoveCLI.FILE,
                         saiR2OutFile.getAbsolutePath());
                 CondorJob removeSAIJob = builder.build();
@@ -206,8 +207,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addEdge(bwaSAMPairedEndJob, removeSAIJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, PicardAddOrReplaceReadGroupsCLI.class,
-                        getWorkflowPlan(), htsfSample).siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, PicardAddOrReplaceReadGroupsCLI.class, attempt, sample)
+                        .siteName(siteName);
                 File picardAddOrReplaceReadGroupsOuput = new File(outputDirectory, bwaSAMPairedEndOutFile.getName()
                         .replace(".sam", ".fixed-rg.bam"));
                 builder.addArgument(PicardAddOrReplaceReadGroupsCLI.INPUT, bwaSAMPairedEndOutFile.getAbsolutePath())
@@ -217,12 +218,11 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                                 PicardSortOrderType.COORDINATE.toString().toLowerCase())
                         .addArgument(
                                 PicardAddOrReplaceReadGroupsCLI.READGROUPID,
-                                String.format("%s-%s_L%03d", sequencerRun.getName(), htsfSample.getBarcode(),
-                                        htsfSample.getLaneIndex()))
+                                String.format("%s-%s_L%03d", flowcell.getName(), sample.getBarcode(),
+                                        sample.getLaneIndex()))
                         .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPLIBRARY, sampleName)
-                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORM,
-                                sequencerRun.getPlatform().getInstrument())
-                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORMUNIT, htsfSample.getBarcode())
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORM, readGroupPlatform)
+                        .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPPLATFORMUNIT, sample.getBarcode())
                         .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPSAMPLENAME, sampleName)
                         .addArgument(PicardAddOrReplaceReadGroupsCLI.READGROUPCENTERNAME, "UNC");
                 CondorJob picardAddOrReplaceReadGroupsJob = builder.build();
@@ -231,8 +231,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addEdge(bwaSAMPairedEndJob, picardAddOrReplaceReadGroupsJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, getWorkflowPlan(), htsfSample, false)
-                        .siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, attempt, sample, false).siteName(
+                        siteName);
                 builder.addArgument(RemoveCLI.FILE, bwaSAMPairedEndOutFile.getAbsolutePath());
                 CondorJob removeBWASAMPairedEndOutFileJob = builder.build();
                 logger.info(removeBWASAMPairedEndOutFileJob.toString());
@@ -240,8 +240,8 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 graph.addEdge(picardAddOrReplaceReadGroupsJob, removeBWASAMPairedEndOutFileJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, SAMToolsIndexCLI.class, getWorkflowPlan(), htsfSample)
-                        .siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, SAMToolsIndexCLI.class, attempt, sample).siteName(
+                        siteName);
                 File samtoolsIndexOutput = new File(outputDirectory, picardAddOrReplaceReadGroupsOuput.getName()
                         .replace(".bam", ".bai"));
                 builder.addArgument(SAMToolsIndexCLI.INPUT, picardAddOrReplaceReadGroupsOuput.getAbsolutePath())
@@ -270,25 +270,25 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
             throw new WorkflowException("NEC_IRODS_HOME is not set");
         }
 
-        Set<HTSFSample> htsfSampleSet = getAggregateHTSFSampleSet();
-        logger.info("htsfSampleSet.size(): {}", htsfSampleSet.size());
+        Set<Sample> sampleSet = getAggregatedSamples();
 
-        for (HTSFSample htsfSample : htsfSampleSet) {
+        for (Sample sample : sampleSet) {
 
-            if ("Undetermined".equals(htsfSample.getBarcode())) {
+            if ("Undetermined".equals(sample.getBarcode())) {
                 continue;
             }
 
-            SequencerRun sequencerRun = htsfSample.getSequencerRun();
-            File outputDirectory = new File(htsfSample.getOutputDirectory());
+            Flowcell flowcell = sample.getFlowcell();
+            File outputDirectory = new File(sample.getOutputDirectory());
+
             File tmpDir = new File(outputDirectory, "tmp");
             if (!tmpDir.exists()) {
                 tmpDir.mkdirs();
             }
 
-            logger.debug("htsfSample: {}", htsfSample.toString());
-            List<File> readPairList = WorkflowUtil.getReadPairList(htsfSample.getFileDatas(), sequencerRun.getName(),
-                    htsfSample.getLaneIndex());
+            logger.debug("htsfSample: {}", sample.toString());
+            List<File> readPairList = WorkflowUtil.getReadPairList(sample.getFileDatas(), flowcell.getName(),
+                    sample.getLaneIndex());
             logger.debug("readPairList.size(): {}", readPairList.size());
 
             String iRODSDirectory;
@@ -297,13 +297,12 @@ public class NECAlignmentWorkflow extends AbstractWorkflow {
                 case DEV:
                 case STAGING:
                     iRODSDirectory = String.format("/genomicsDataGridZone/sequence_data/%s/nec/%s/%s", runMode
-                            .toString().toLowerCase(), htsfSample.getSequencerRun().getName(), htsfSample
-                            .getLaneIndex().toString());
+                            .toString().toLowerCase(), flowcell.getName(), sample.getLaneIndex().toString());
                     break;
                 case PROD:
                 default:
-                    iRODSDirectory = String.format("/genomicsDataGridZone/sequence_data/nec/%s/%s", htsfSample
-                            .getSequencerRun().getName(), htsfSample.getLaneIndex().toString());
+                    iRODSDirectory = String.format("/genomicsDataGridZone/sequence_data/nec/%s/%s", flowcell.getName(),
+                            sample.getLaneIndex().toString());
                     break;
             }
 
