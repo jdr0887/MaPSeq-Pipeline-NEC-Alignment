@@ -10,34 +10,30 @@
       <cm:property name="siteName" value="Kure" />
       <cm:property name="referenceSequence"
         value="$NECALIGNMENT_REFERENCES_DIRECTORY/BUILD.37.1/bwa061sam0118/BUILD.37.1.sorted.shortid.fa" />
+      <cm:property name="readGroupPlatform" value="ILLUMINA" />
+      <cm:property name="readGroupPlatformUnit" value="Illumina HiSeq 2000" />
     </cm:default-properties>
   </cm:property-placeholder>
 
   <reference id="maPSeqConfigurationService" interface="edu.unc.mapseq.config.MaPSeqConfigurationService" />
-  <reference id="accountDAO" interface="edu.unc.mapseq.dao.AccountDAO" />
-  <reference id="accountGroupDAO" interface="edu.unc.mapseq.dao.AccountGroupDAO" />
   <reference id="fileDataDAO" interface="edu.unc.mapseq.dao.FileDataDAO" />
-  <reference id="HTSFSampleDAO" interface="edu.unc.mapseq.dao.HTSFSampleDAO" />
-  <reference id="platformDAO" interface="edu.unc.mapseq.dao.PlatformDAO" />
+  <reference id="sampleDAO" interface="edu.unc.mapseq.dao.SampleDAO" />
   <reference id="jobDAO" interface="edu.unc.mapseq.dao.JobDAO" />
   <reference id="studyDAO" interface="edu.unc.mapseq.dao.StudyDAO" />
-  <reference id="sequencerRunDAO" interface="edu.unc.mapseq.dao.SequencerRunDAO" />
+  <reference id="flowcellDAO" interface="edu.unc.mapseq.dao.FlowcellDAO" />
   <reference id="workflowDAO" interface="edu.unc.mapseq.dao.WorkflowDAO" />
-  <reference id="workflowPlanDAO" interface="edu.unc.mapseq.dao.WorkflowPlanDAO" />
   <reference id="workflowRunDAO" interface="edu.unc.mapseq.dao.WorkflowRunDAO" />
+  <reference id="workflowRunAttemptDAO" interface="edu.unc.mapseq.dao.WorkflowRunAttemptDAO" />
 
   <bean id="maPSeqDAOBean" class="edu.unc.mapseq.dao.MaPSeqDAOBean">
-    <property name="accountDAO" ref="accountDAO" />
-    <property name="accountGroupDAO" ref="accountGroupDAO" />
     <property name="fileDataDAO" ref="fileDataDAO" />
-    <property name="HTSFSampleDAO" ref="HTSFSampleDAO" />
-    <property name="platformDAO" ref="platformDAO" />
+    <property name="sampleDAO" ref="sampleDAO" />
     <property name="jobDAO" ref="jobDAO" />
     <property name="studyDAO" ref="studyDAO" />
-    <property name="sequencerRunDAO" ref="sequencerRunDAO" />
+    <property name="flowcellDAO" ref="flowcellDAO" />
     <property name="workflowDAO" ref="workflowDAO" />
-    <property name="workflowPlanDAO" ref="workflowPlanDAO" />
     <property name="workflowRunDAO" ref="workflowRunDAO" />
+    <property name="workflowRunAttemptDAO" ref="workflowRunAttemptDAO" />
   </bean>
 
   <bean id="NECAlignmentWorkflowBeanService" class="edu.unc.mapseq.workflow.impl.WorkflowBeanServiceImpl">
@@ -49,6 +45,8 @@
       <map>
         <entry key="siteName" value="${siteName}" />
         <entry key="referenceSequence" value="${referenceSequence}" />
+        <entry key="readGroupPlatform" value="${readGroupPlatform}" />
+        <entry key="readGroupPlatformUnit" value="${readGroupPlatformUnit}" />
       </map>
     </property>
     <cm:managed-properties persistent-id="edu.unc.mapseq.workflow.nec.alignment"
