@@ -15,19 +15,17 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import edu.unc.mapseq.dao.AccountDAO;
 import edu.unc.mapseq.dao.MaPSeqDAOBean;
 import edu.unc.mapseq.dao.MaPSeqDAOException;
 import edu.unc.mapseq.dao.WorkflowDAO;
-import edu.unc.mapseq.dao.WorkflowPlanDAO;
+import edu.unc.mapseq.dao.WorkflowRunAttemptDAO;
 import edu.unc.mapseq.dao.WorkflowRunDAO;
-import edu.unc.mapseq.dao.model.Account;
-import edu.unc.mapseq.dao.model.HTSFSample;
-import edu.unc.mapseq.dao.model.SequencerRun;
+import edu.unc.mapseq.dao.model.Flowcell;
+import edu.unc.mapseq.dao.model.Sample;
 import edu.unc.mapseq.dao.model.Workflow;
-import edu.unc.mapseq.dao.model.WorkflowPlan;
 import edu.unc.mapseq.dao.model.WorkflowRun;
-import edu.unc.mapseq.dao.model.WorkflowRunStatusType;
+import edu.unc.mapseq.dao.model.WorkflowRunAttempt;
+import edu.unc.mapseq.dao.model.WorkflowRunAttemptStatusType;
 import edu.unc.mapseq.workflow.WorkflowException;
 import edu.unc.mapseq.workflow.impl.AbstractMessageListener;
 import edu.unc.mapseq.workflow.model.WorkflowEntity;
@@ -69,10 +67,6 @@ public class NECAlignmentMessageListener extends AbstractMessageListener {
 
         try {
             workflowMessage = mapper.readValue(messageValue, WorkflowMessage.class);
-            if (StringUtils.isEmpty(workflowMessage.getAccountName())) {
-                logger.error("json lacks account_name");
-                return;
-            }
             if (workflowMessage.getEntities() == null) {
                 logger.error("json lacks entities");
                 return;
@@ -83,25 +77,13 @@ public class NECAlignmentMessageListener extends AbstractMessageListener {
         }
 
         MaPSeqDAOBean daoBean = getWorkflowBeanService().getMaPSeqDAOBean();
-        AccountDAO accountDAO = daoBean.getAccountDAO();
         WorkflowDAO workflowDAO = daoBean.getWorkflowDAO();
         WorkflowRunDAO workflowRunDAO = daoBean.getWorkflowRunDAO();
-        WorkflowPlanDAO workflowPlanDAO = daoBean.getWorkflowPlanDAO();
+        WorkflowRunAttemptDAO workflowRunAttemptDAO = daoBean.getWorkflowRunAttemptDAO();
 
-        SequencerRun sequencerRun = null;
-        Set<HTSFSample> htsfSampleSet = new HashSet<HTSFSample>();
+        Flowcell flowcell = null;
+        Set<Sample> sampleSet = new HashSet<Sample>();
         WorkflowRun workflowRun = null;
-        Account account = null;
-        try {
-            List<Account> accountList = accountDAO.findByName(workflowMessage.getAccountName());
-            if (accountList == null || (accountList != null && accountList.isEmpty())) {
-                logger.error("Account doesn't exist: {}", workflowMessage.getAccountName());
-                return;
-            }
-            account = accountList.get(0);
-        } catch (MaPSeqDAOException e) {
-            logger.error("ERROR", e);
-        }
 
         Workflow workflow = null;
         try {
@@ -116,55 +98,50 @@ public class NECAlignmentMessageListener extends AbstractMessageListener {
         }
 
         try {
+            for (WorkflowEntity entity : workflowMessage.getEntities()) {
+                if (StringUtils.isNotEmpty(entity.getEntityType())
+                        && Flowcell.class.getSimpleName().equals(entity.getEntityType())) {
+                    flowcell = getFlowcell(entity);
+                }
+            }
 
             for (WorkflowEntity entity : workflowMessage.getEntities()) {
-
-                if (StringUtils.isNotEmpty(entity.getEntityType())) {
-
-                    if (SequencerRun.class.getSimpleName().equals(entity.getEntityType())) {
-                        sequencerRun = getSequencerRun(entity);
-                    }
-
-                    if (HTSFSample.class.getSimpleName().equals(entity.getEntityType())) {
-                        HTSFSample htsfSample = getHTSFSample(entity);
-                        htsfSampleSet.add(htsfSample);
-                    }
-
-                    if (WorkflowRun.class.getSimpleName().equals(entity.getEntityType())) {
-                        workflowRun = getWorkflowRun(workflow, entity, account);
-                    }
-
+                if (StringUtils.isNotEmpty(entity.getEntityType())
+                        && Sample.class.getSimpleName().equals(entity.getEntityType())) {
+                    Sample sample = getSample(entity);
+                    sampleSet.add(sample);
                 }
+            }
 
+            if (flowcell == null && sampleSet.isEmpty()) {
+                logger.warn("Flowcell & sampleSet are both empty...not running anything");
+                throw new WorkflowException("Flowcell & sampleSet are both empty...not running anything");
+            }
+
+            for (WorkflowEntity entity : workflowMessage.getEntities()) {
+                if (StringUtils.isNotEmpty(entity.getEntityType())
+                        && WorkflowRun.class.getSimpleName().equals(entity.getEntityType())) {
+                    workflowRun = getWorkflowRun(workflow, entity);
+                }
+            }
+
+            if (workflowRun == null) {
+                logger.warn("WorkflowRun is null...not running anything");
+                throw new WorkflowException("WorkflowRun is null...not running anything");
             }
         } catch (WorkflowException e1) {
             logger.error(e1.getMessage(), e1);
             return;
         }
 
-        if (workflowRun == null) {
-            logger.error("workflowRun is null, not running anything");
-            return;
-        }
-
-        if (sequencerRun == null && htsfSampleSet.size() == 0) {
-            logger.error("Invalid JSON...not running anything");
-            workflowRun.setStatus(WorkflowRunStatusType.FAILED);
-        }
-
         try {
             Long workflowRunId = workflowRunDAO.save(workflowRun);
             workflowRun.setId(workflowRunId);
 
-            WorkflowPlan workflowPlan = new WorkflowPlan();
-            workflowPlan.setWorkflowRun(workflowRun);
-            if (htsfSampleSet.size() > 0) {
-                workflowPlan.setHTSFSamples(htsfSampleSet);
-            }
-            if (sequencerRun != null) {
-                workflowPlan.setSequencerRun(sequencerRun);
-            }
-            workflowPlanDAO.save(workflowPlan);
+            WorkflowRunAttempt attempt = new WorkflowRunAttempt();
+            attempt.setStatus(WorkflowRunAttemptStatusType.PENDING);
+            attempt.setWorkflowRun(workflowRun);
+            workflowRunAttemptDAO.save(attempt);
         } catch (MaPSeqDAOException e) {
             e.printStackTrace();
         }
