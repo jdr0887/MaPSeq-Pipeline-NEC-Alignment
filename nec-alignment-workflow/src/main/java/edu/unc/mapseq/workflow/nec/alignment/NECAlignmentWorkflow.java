@@ -288,7 +288,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 tmpDir.mkdirs();
             }
 
-            logger.debug("htsfSample: {}", sample.toString());
+            logger.debug(sample.toString());
             List<File> readPairList = WorkflowUtil.getReadPairList(sample.getFileDatas(), flowcell.getName(),
                     sample.getLaneIndex());
             logger.debug("readPairList.size(): {}", readPairList.size());
