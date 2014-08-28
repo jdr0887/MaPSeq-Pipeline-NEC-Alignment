@@ -27,8 +27,8 @@ public class RunNECAlignmentWorkflowAction extends AbstractAction {
     @Argument(index = 0, name = "workflowRunName", description = "WorkflowRun.name", required = true, multiValued = false)
     private String workflowRunName;
 
-    @Argument(index = 1, name = "htsfSampleId", description = "htsfSampleId", required = true, multiValued = false)
-    private Long htsfSampleId;
+    @Argument(index = 1, name = "sampleId", description = "sampleId", required = true, multiValued = false)
+    private Long sampleId;
 
     private MaPSeqDAOBean maPSeqDAOBean;
 
@@ -57,12 +57,11 @@ public class RunNECAlignmentWorkflowAction extends AbstractAction {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
 
             generator.writeStartObject();
-            generator.writeStringField("accountName", System.getProperty("user.name"));
             generator.writeArrayFieldStart("entities");
 
             generator.writeStartObject();
-            generator.writeStringField("entityType", "HTSFSample");
-            generator.writeStringField("guid", htsfSampleId.toString());
+            generator.writeStringField("entityType", "Sample");
+            generator.writeStringField("id", sampleId.toString());
             generator.writeEndObject();
 
             generator.writeStartObject();
@@ -95,12 +94,12 @@ public class RunNECAlignmentWorkflowAction extends AbstractAction {
         return null;
     }
 
-    public Long getHtsfSampleId() {
-        return htsfSampleId;
+    public Long getSampleId() {
+        return sampleId;
     }
 
-    public void setHtsfSampleId(Long htsfSampleId) {
-        this.htsfSampleId = htsfSampleId;
+    public void setSampleId(Long sampleId) {
+        this.sampleId = sampleId;
     }
 
     public String getWorkflowRunName() {
