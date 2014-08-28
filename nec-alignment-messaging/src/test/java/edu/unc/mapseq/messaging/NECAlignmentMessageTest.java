@@ -40,16 +40,16 @@ public class NECAlignmentMessageTest {
             Destination destination = session.createQueue("queue/nec.alignment");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-            String format = "{\"account_name\":\"%s\",\"entities\":[{\"entity_type\":\"HTSFSample\",\"guid\":\"%d\"},{\"entity_type\":\"WorkflowRun\",\"name\":\"%s-%s\"}]}";
+            String format = "{\"entities\":[{\"entityType\":\"Sample\",\"id\":\"%d\"},{\"entityType\":\"WorkflowRun\",\"name\":\"%s-%s\"}]}";
 
-            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67401, "jdr-nec-alignment",
+            producer.send(session.createTextMessage(String.format(format, 67401, "jdr-nec-alignment",
                     DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            producer.send(session.createTextMessage(String.format(format, "rc_renci.svc", 67467, "jdr-nec-alignment",
+            producer.send(session.createTextMessage(String.format(format, 67467, "jdr-nec-alignment",
                     DateFormatUtils.ISO_TIME_NO_T_FORMAT.format(new Date()))));
             try {
                 Thread.sleep(1000);
@@ -84,7 +84,7 @@ public class NECAlignmentMessageTest {
             Destination destination = session.createQueue("queue/nec.alignment");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-            String format = "{\"account_name\":\"%s\",\"entities\":[{\"entity_type\":\"HTSFSample\",\"guid\":\"%s\"},{\"entity_type\":\"WorkflowRun\",\"name\":\"%s-%s\"}]}";
+            String format = "{\"entities\":[{\"entityType\":\"Sample\",\"id\":\"%s\"},{\"entityType\":\"WorkflowRun\",\"name\":\"%s-%s\"}]}";
             InputStream is = NECAlignmentMessageTest.class.getResourceAsStream("htsf_sample_id_list.txt");
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String line;
@@ -124,11 +124,11 @@ public class NECAlignmentMessageTest {
 
         List<Sample> sampleList = new ArrayList<Sample>();
 
-        // sampleList.addAll(htsfSampleService.findBySequencerRunId(191541L));
-        // sampleList.addAll(htsfSampleService.findBySequencerRunId(191738L));
-        // sampleList.addAll(htsfSampleService.findBySequencerRunId(190345L));
-        // sampleList.addAll(htsfSampleService.findBySequencerRunId(190520L));
-        // sampleList.addAll(htsfSampleService.findBySequencerRunId(191372L));
+        // sampleList.addAll(sampleService.findByFlowcellId(191541L));
+        // sampleList.addAll(sampleService.findByFlowcellId(191738L));
+        // sampleList.addAll(sampleService.findByFlowcellId(190345L));
+        // sampleList.addAll(sampleService.findByFlowcellId(190520L));
+        // sampleList.addAll(sampleService.findByFlowcellId(191372L));
         sampleList.addAll(sampleService.findByFlowcellId(192405L));
         sampleList.addAll(sampleService.findByFlowcellId(191192L));
 
@@ -142,7 +142,7 @@ public class NECAlignmentMessageTest {
             Destination destination = session.createQueue("queue/nec.alignment");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-            String format = "{\"account_name\":\"%s\",\"entities\":[{\"entity_type\":\"HTSFSample\",\"guid\":\"%d\"},{\"entity_type\":\"WorkflowRun\",\"name\":\"%s_L%d_%s_BWA\"}]}";
+            String format = "{\"entities\":[{\"entityType\":\"Sample\",\"id\":\"%d\"},{\"entityType\":\"WorkflowRun\",\"name\":\"%s_L%d_%s_BWA\"}]}";
             for (Sample sample : sampleList) {
 
                 if ("Undetermined".equals(sample.getBarcode())) {
@@ -150,8 +150,8 @@ public class NECAlignmentMessageTest {
                 }
 
                 Flowcell flowcell = sample.getFlowcell();
-                String message = String.format(format, "rc_renci.svc", sample.getId(), flowcell.getName(),
-                        sample.getLaneIndex(), sample.getName());
+                String message = String.format(format, sample.getId(), flowcell.getName(), sample.getLaneIndex(),
+                        sample.getName());
                 System.out.println(message);
                 producer.send(session.createTextMessage(message));
             }
