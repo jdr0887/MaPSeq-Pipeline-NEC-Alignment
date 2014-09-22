@@ -1,4 +1,4 @@
-<features name="mapseq-pipeline-nec-alignment-${project.version}">
+<features name="mapseq-pipeline-nec-alignment-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0">
 
   <feature name="mapseq-pipeline-nec-alignment" version="${project.version}" resolver="(obr)">
     <bundle>mvn:edu.unc.mapseq.pipelines.nec-alignment/nec-alignment-workflow/${project.version}</bundle>
