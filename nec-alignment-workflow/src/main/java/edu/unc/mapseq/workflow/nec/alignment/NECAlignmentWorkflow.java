@@ -118,8 +118,8 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
             File fastqcR2Output;
             try {
                 // new job
-                CondorJobBuilder builder = WorkflowJobFactory.createJob(++count, WriteVCFHeaderCLI.class, attempt,
-                        sample).siteName(siteName);
+                CondorJobBuilder builder = WorkflowJobFactory.createJob(++count, WriteVCFHeaderCLI.class, attempt)
+                        .siteName(siteName);
                 String flowcellProper = flowcell.getName().substring(flowcell.getName().length() - 9,
                         flowcell.getName().length());
                 writeVCFHeaderOut = new File(outputDirectory, fastqLaneRootName + ".vcf.hdr");
@@ -136,7 +136,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addVertex(writeVCFHeaderJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, attempt, sample).siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, attempt).siteName(siteName);
                 fastqcR1Output = new File(outputDirectory, r1FastqRootName + ".fastqc.zip");
                 builder.addArgument(FastQCCLI.INPUT, r1FastqFile.getAbsolutePath())
                         .addArgument(FastQCCLI.OUTPUT, fastqcR1Output.getAbsolutePath())
@@ -146,8 +146,8 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addVertex(fastQCR1Job);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, attempt, sample, false)
-                        .siteName(siteName).numberOfProcessors(4);
+                builder = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, attempt, false).siteName(siteName)
+                        .numberOfProcessors(4);
                 File saiR1OutFile = new File(outputDirectory, r1FastqRootName + ".sai");
                 builder.addArgument(BWAAlignCLI.THREADS, "4")
                         .addArgument(BWAAlignCLI.FASTQ, r1FastqFile.getAbsolutePath())
@@ -159,7 +159,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addEdge(fastQCR1Job, bwaAlignR1Job);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, attempt, sample).siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, FastQCCLI.class, attempt).siteName(siteName);
                 fastqcR2Output = new File(outputDirectory, r2FastqRootName + ".fastqc.zip");
                 builder.addArgument(FastQCCLI.INPUT, r2FastqFile.getAbsolutePath())
                         .addArgument(FastQCCLI.OUTPUT, fastqcR2Output.getAbsolutePath())
@@ -169,8 +169,8 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addVertex(fastQCR2Job);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, attempt, sample, false)
-                        .siteName(siteName).numberOfProcessors(4);
+                builder = WorkflowJobFactory.createJob(++count, BWAAlignCLI.class, attempt, false).siteName(siteName)
+                        .numberOfProcessors(4);
                 File saiR2OutFile = new File(outputDirectory, r2FastqRootName + ".sai");
                 builder.addArgument(BWAAlignCLI.THREADS, "4")
                         .addArgument(BWAAlignCLI.FASTQ, r2FastqFile.getAbsolutePath())
@@ -182,8 +182,8 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addEdge(fastQCR2Job, bwaAlignR2Job);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, BWASAMPairedEndCLI.class, attempt, sample, false)
-                        .siteName(siteName);
+                builder = WorkflowJobFactory.createJob(++count, BWASAMPairedEndCLI.class, attempt, false).siteName(
+                        siteName);
                 File bwaSAMPairedEndOutFile = new File(outputDirectory, fastqLaneRootName + ".sam");
                 builder.addArgument(BWASAMPairedEndCLI.FASTADB, referenceSequence)
                         .addArgument(BWASAMPairedEndCLI.FASTQ1, r1FastqFile.getAbsolutePath())
@@ -199,8 +199,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addEdge(writeVCFHeaderJob, bwaSAMPairedEndJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, attempt, sample, false).siteName(
-                        siteName);
+                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, attempt, false).siteName(siteName);
                 builder.addArgument(RemoveCLI.FILE, saiR1OutFile.getAbsolutePath()).addArgument(RemoveCLI.FILE,
                         saiR2OutFile.getAbsolutePath());
                 CondorJob removeSAIJob = builder.build();
@@ -209,7 +208,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addEdge(bwaSAMPairedEndJob, removeSAIJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, PicardAddOrReplaceReadGroupsCLI.class, attempt, sample)
+                builder = WorkflowJobFactory.createJob(++count, PicardAddOrReplaceReadGroupsCLI.class, attempt)
                         .siteName(siteName);
                 File picardAddOrReplaceReadGroupsOuput = new File(outputDirectory, bwaSAMPairedEndOutFile.getName()
                         .replace(".sam", ".fixed-rg.bam"));
@@ -233,8 +232,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addEdge(bwaSAMPairedEndJob, picardAddOrReplaceReadGroupsJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, attempt, sample, false).siteName(
-                        siteName);
+                builder = WorkflowJobFactory.createJob(++count, RemoveCLI.class, attempt, false).siteName(siteName);
                 builder.addArgument(RemoveCLI.FILE, bwaSAMPairedEndOutFile.getAbsolutePath());
                 CondorJob removeBWASAMPairedEndOutFileJob = builder.build();
                 logger.info(removeBWASAMPairedEndOutFileJob.toString());
@@ -242,8 +240,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 graph.addEdge(picardAddOrReplaceReadGroupsJob, removeBWASAMPairedEndOutFileJob);
 
                 // new job
-                builder = WorkflowJobFactory.createJob(++count, SAMToolsIndexCLI.class, attempt, sample).siteName(
-                        siteName);
+                builder = WorkflowJobFactory.createJob(++count, SAMToolsIndexCLI.class, attempt).siteName(siteName);
                 File samtoolsIndexOutput = new File(outputDirectory, picardAddOrReplaceReadGroupsOuput.getName()
                         .replace(".bam", ".bai"));
                 builder.addArgument(SAMToolsIndexCLI.INPUT, picardAddOrReplaceReadGroupsOuput.getAbsolutePath())
