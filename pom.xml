@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.unc.mapseq.pipelines</groupId>
   <artifactId>nec-alignment</artifactId>
-  <version>0.5.11</version>
+  <version>0.5.12-SNAPSHOT</version>
   <packaging>pom</packaging>
   <issueManagement>
     <system>gForge</system>
@@ -39,14 +39,14 @@
   <scm>
     <developerConnection>scm:git:ssh://${user.name}@code.renci.org/gitroot/mps_nec_a_pl</developerConnection>
     <connection>scm:git:ssh://developername@code.renci.org/gitroot/mps_nec_a_pl</connection>
-    <tag>nec-alignment-0.5.11</tag>
+    <tag>HEAD</tag>
   </scm>
   <dependencyManagement>
     <dependencies>
       <dependency>
       	<groupId>edu.unc.mapseq.pipelines.nec-alignment</groupId>
       	<artifactId>nec-alignment-workflow</artifactId>
-      	<version>0.5.11</version>
+      	<version>0.5.12-SNAPSHOT</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
