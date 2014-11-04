@@ -88,7 +88,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
             logger.debug(sample.toString());
 
             Flowcell flowcell = sample.getFlowcell();
-            File outputDirectory = new File(sample.getOutputDirectory(), "NEC");
+            File outputDirectory = new File(sample.getOutputDirectory(), getName());
             File tmpDirectory = new File(outputDirectory, "tmp");
             tmpDirectory.mkdirs();
 
@@ -285,7 +285,7 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
             }
 
             Flowcell flowcell = sample.getFlowcell();
-            File outputDirectory = new File(sample.getOutputDirectory());
+            File outputDirectory = new File(sample.getOutputDirectory(), getName());
 
             File tmpDir = new File(outputDirectory, "tmp");
             if (!tmpDir.exists()) {
@@ -332,6 +332,11 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
 
                 commandInput = new CommandInput();
                 commandInput.setCommand(String.format("%s/bin/imeta add -C %s Project NEC", irodsHome, iRODSDirectory));
+                commandInput.setWorkDir(tmpDir);
+                commandInputList.add(commandInput);
+
+                commandInput = new CommandInput();
+                commandInput.setCommand(String.format("%s/bin/imeta rm -C %s Project NEC", irodsHome, iRODSDirectory));
                 commandInput.setWorkDir(tmpDir);
                 commandInputList.add(commandInput);
 
