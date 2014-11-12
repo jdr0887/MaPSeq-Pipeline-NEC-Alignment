@@ -12,23 +12,9 @@
   <version>0.5.25-SNAPSHOT</version>
   <packaging>pom</packaging>
   <issueManagement>
-    <system>gForge</system>
-    <url>https://code.renci.org/gf/project/mps_nec_a_pl/tracker/</url>
+    <system>GitHub Issues</system>
+    <url>https://github.com/jdr0887/MaPSeq-Pipeline-NEC-Alignment/issues</url>
   </issueManagement>
-  <ciManagement>
-    <system>hudson</system>
-    <url>https://ci-dev.renci.org/hudson/mapseq-pipeline-nec-alignment</url>
-    <notifiers>
-      <notifier>
-	<type>mail</type>
-	<sendOnError>true</sendOnError>
-	<sendOnFailure>true</sendOnFailure>
-	<configuration>
-	  <address>jdr0887@renci.org</address>
-	</configuration>
-      </notifier>
-    </notifiers>
-  </ciManagement>
   <licenses>    
     <license>
       <name>UNC Open Source Public License</name>
@@ -37,9 +23,9 @@
     </license>
   </licenses>
   <scm>
-    <developerConnection>scm:git:ssh://${user.name}@code.renci.org/gitroot/mps_nec_a_pl</developerConnection>
-    <connection>scm:git:ssh://developername@code.renci.org/gitroot/mps_nec_a_pl</connection>
-    <tag>HEAD</tag>
+    <url>https://github.com/jdr0887/MaPSeq-Pipeline-NEC-Alignment</url>
+    <developerConnection>scm:git:git@github.com:jdr0887/MaPSeq-Pipeline-NEC-Alignment.git</developerConnection>
+    <connection>scm:git:git@github.com:jdr0887/MaPSeq-Pipeline-NEC-Alignment.git</connection>
   </scm>
   <dependencyManagement>
     <dependencies>
