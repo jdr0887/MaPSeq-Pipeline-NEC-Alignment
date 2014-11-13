@@ -149,9 +149,9 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 // new job
                 builder = WorkflowJobFactory
                         .createJob(++count, BWAAlignCLI.class, attempt.getId(), sample.getId(), false)
-                        .siteName(siteName).numberOfProcessors(4);
+                        .siteName(siteName).numberOfProcessors(8);
                 File saiR1OutFile = new File(outputDirectory, r1FastqRootName + ".sai");
-                builder.addArgument(BWAAlignCLI.THREADS, "4")
+                builder.addArgument(BWAAlignCLI.THREADS, "8")
                         .addArgument(BWAAlignCLI.FASTQ, r1FastqFile.getAbsolutePath())
                         .addArgument(BWAAlignCLI.FASTADB, referenceSequence)
                         .addArgument(BWAAlignCLI.OUTFILE, saiR1OutFile.getAbsolutePath());
@@ -174,9 +174,9 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
                 // new job
                 builder = WorkflowJobFactory
                         .createJob(++count, BWAAlignCLI.class, attempt.getId(), sample.getId(), false)
-                        .siteName(siteName).numberOfProcessors(4);
+                        .siteName(siteName).numberOfProcessors(8);
                 File saiR2OutFile = new File(outputDirectory, r2FastqRootName + ".sai");
-                builder.addArgument(BWAAlignCLI.THREADS, "4")
+                builder.addArgument(BWAAlignCLI.THREADS, "8")
                         .addArgument(BWAAlignCLI.FASTQ, r2FastqFile.getAbsolutePath())
                         .addArgument(BWAAlignCLI.FASTADB, referenceSequence)
                         .addArgument(BWAAlignCLI.OUTFILE, saiR2OutFile.getAbsolutePath());
