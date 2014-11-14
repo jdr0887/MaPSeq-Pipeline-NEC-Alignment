@@ -401,9 +401,4 @@ public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
         }
     }
 
-    @Override
-    public void cleanUp() throws WorkflowException {
-        // do nothing
-    }
-
 }
