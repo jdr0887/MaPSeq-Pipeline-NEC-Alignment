@@ -35,10 +35,10 @@ import edu.unc.mapseq.module.picard.PicardAddOrReplaceReadGroupsCLI;
 import edu.unc.mapseq.module.picard.PicardSortOrderType;
 import edu.unc.mapseq.module.samtools.SAMToolsIndexCLI;
 import edu.unc.mapseq.workflow.WorkflowException;
-import edu.unc.mapseq.workflow.WorkflowUtil;
 import edu.unc.mapseq.workflow.impl.AbstractSampleWorkflow;
 import edu.unc.mapseq.workflow.impl.IRODSBean;
 import edu.unc.mapseq.workflow.impl.WorkflowJobFactory;
+import edu.unc.mapseq.workflow.impl.WorkflowUtil;
 
 public class NECAlignmentWorkflow extends AbstractSampleWorkflow {
 
