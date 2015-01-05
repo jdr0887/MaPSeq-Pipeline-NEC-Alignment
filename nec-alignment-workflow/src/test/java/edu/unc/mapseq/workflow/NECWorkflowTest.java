@@ -7,7 +7,6 @@ import java.util.Iterator;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 import org.junit.Test;
 import org.renci.jlrm.condor.CondorJob;
