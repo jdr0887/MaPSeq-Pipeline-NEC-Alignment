@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.unc.mapseq.pipelines</groupId>
   <artifactId>nec-alignment</artifactId>
-  <version>0.5.33-SNAPSHOT</version>
+  <version>0.5.33</version>
   <packaging>pom</packaging>
   <issueManagement>
     <system>GitHub Issues</system>
@@ -26,14 +26,14 @@
     <url>https://github.com/jdr0887/MaPSeq-Pipeline-NEC-Alignment</url>
     <developerConnection>scm:git:git@github.com:jdr0887/MaPSeq-Pipeline-NEC-Alignment.git</developerConnection>
     <connection>scm:git:git@github.com:jdr0887/MaPSeq-Pipeline-NEC-Alignment.git</connection>
-    <tag>HEAD</tag>
+    <tag>nec-alignment-0.5.33</tag>
   </scm>
   <dependencyManagement>
     <dependencies>
       <dependency>
       	<groupId>edu.unc.mapseq.pipelines.nec-alignment</groupId>
       	<artifactId>nec-alignment-workflow</artifactId>
-      	<version>0.5.33-SNAPSHOT</version>
+      	<version>0.5.33</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
